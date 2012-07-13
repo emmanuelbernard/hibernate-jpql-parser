@@ -18,8 +18,8 @@ SELECT/FROM STATEMENT
 //testVariousPropertyReferences
 "from A a where b = 1"  OK
 "from A a where a.b.c = 1"  OK
-"from X x where y[1].z = 2"  -> (QUERY (QUERY_SPEC (SELECT_FROM (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF X x)))) (where (= (GENERIC_ELEMENT (. ([ y 1) z)) 2))))
 "from X x where x.y[1].z = 2"  OK
+//"from X x where y[1].z = 2"  -> (QUERY (QUERY_SPEC (SELECT_FROM (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF X x)))) (where (= (GENERIC_ELEMENT (. ([ y 1) z)) 2))))
 //testEntityNamePathWithKeyword
 "from org.hibernate.test.Inner"  OK
 //testWhereClauseIdentPrimaryWithEmbeddedKeyword
@@ -89,7 +89,7 @@ SELECT/FROM STATEMENT
 /**
  * Section 9.8 - Expressions *
  */
-"from eg.DomesticCat cat where cat.name between 'A' and 'B'"  -> (QUERY (QUERY_SPEC (SELECT_FROM (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF eg.DomesticCat cat)))) (where (LOGICAL_EXPR (between (GENERIC_ELEMENT (. cat name)) (BETWEEN_LIST (EXPR 'A') (EXPR 'B')))))))
+"from eg.DomesticCat cat where cat.name between 'A' and 'B'"  -> (QUERY (QUERY_SPEC (SELECT_FROM (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF eg.DomesticCat cat))) (SELECT (SELECT_LIST (SELECT_ITEM cat)))) (where (between (PATH (. cat name)) (BETWEEN_LIST 'A' 'B')))))
 "from eg.DomesticCat cat where cat.name in ( 'Foo', 'Bar', 'Baz' )"  OK
 "from eg.DomesticCat cat where cat.name not between 'A' and 'B'"  OK
 "from eg.DomesticCat cat where cat.name not in ( 'Foo', 'Bar', 'Baz' )"  OK
@@ -1502,7 +1502,7 @@ SELECT/FROM STATEMENT
 "from Animal an where an.bodyWeight between 0 and 10"  OK
 "from Animal an where an.bodyWeight not between 0 and 10"  OK
 "from Animal an where sqrt(an.bodyWeight)/2 > 10"  OK
-"from Animal an where (an.bodyWeight > 10 and an.bodyWeight < 100) or an.bodyWeight is null"  -> (A)
+"from Animal an where (an.bodyWeight > 10 and an.bodyWeight < 100) or an.bodyWeight is null"  -> (QUERY (QUERY_SPEC (SELECT_FROM (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF Animal an))) (SELECT (SELECT_LIST (SELECT_ITEM an)))) (where (or (and (> (PATH (. an bodyWeight)) 10) (< (PATH (. an bodyWeight)) 100)) (is null (PATH (. an bodyWeight)))))))
 //ASTParserLoadingTest.testEntityFetching
 "from Animal an join fetch an.mother"  OK
 "select an from Animal an join fetch an.mother"  OK
@@ -1546,32 +1546,32 @@ SELECT/FROM STATEMENT
 //ASTParserLoadingTest.testSubselectBetween
 "from Animal x where (select max(a.bodyWeight) from Animal a) between 0 and 100"  OK
 //
-"from Animal x where (x.name, x.bodyWeight) = ('cat', 20)"  -> (QUERY (QUERY_SPEC (SELECT_FROM (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF Animal x)))) (where (LOGICAL_EXPR (= (VECTOR_EXPR (EXPR (GENERIC_ELEMENT (. x name))) (EXPR (GENERIC_ELEMENT (. x bodyWeight)))) (VECTOR_EXPR (EXPR 'cat') (EXPR 20)))))))
+//"from Animal x where (x.name, x.bodyWeight) = ('cat', 20)"  -> (QUERY (QUERY_SPEC (SELECT_FROM (from (PERSISTER_SPACE (ENTITY_PERSISTER_REF Animal x)))) (where (LOGICAL_EXPR (= (VECTOR_EXPR (EXPR (GENERIC_ELEMENT (. x name))) (EXPR (GENERIC_ELEMENT (. x bodyWeight)))) (VECTOR_EXPR (EXPR 'cat') (EXPR 20)))))))
 
 /*
 DELETE STATEMENT
 */
-"delete Animal where mother is not null"  -> (delete Animal (where (LOGICAL_EXPR (is not null (GENERIC_ELEMENT mother)))))
-"delete Animal where not mother is not null"  -> (delete Animal (where (LOGICAL_EXPR (not (is not null (GENERIC_ELEMENT mother))))))
-"delete Animal"  -> (delete Animal)
-"delete from Thing"  -> (delete Thing)
-"delete from Person"  -> (delete Person)
-"delete from Location"  -> (delete Location)
-"delete from Child"  -> (delete Child)
-"delete from Parent"  -> (delete Parent)
-"delete from Item"  -> (delete Item)
-"delete Customer where contactOwner is not null"  -> (delete Customer (where (LOGICAL_EXPR (is not null (GENERIC_ELEMENT contactOwner)))))
-"delete Employee where manager is not null"  -> (delete Employee (where (LOGICAL_EXPR (is not null (GENERIC_ELEMENT manager)))))
-"delete Employee where manager is null"  -> (delete Employee (where (LOGICAL_EXPR (is null (GENERIC_ELEMENT manager)))))
-"delete Employee where manager is not empty"  -> (delete Employee (where (LOGICAL_EXPR (NOT (EXISTS (QUERY (QUERY_SPEC (SELECT_FROM (FROM (GENERIC_ELEMENT manager))))))))))
-"delete Employee where manager is empty"  -> (delete Employee (where (LOGICAL_EXPR (EXISTS (QUERY (QUERY_SPEC (SELECT_FROM (FROM (GENERIC_ELEMENT manager)))))))))
-"delete Person"  -> (delete Person)
-"delete Locality"  -> (delete Locality)
-"delete Country"  -> (delete Country)
-"delete Continent"  -> (delete Continent)
-"delete from DataPoint"  -> (delete DataPoint)
-"delete from User where userid = :userid"  -> (delete User (where (LOGICAL_EXPR (= (GENERIC_ELEMENT userid) userid))))
-"delete from Mail where alias = :alias"  -> (delete Mail (where (LOGICAL_EXPR (= (GENERIC_ELEMENT alias) alias))))
+"delete Animal where mother is not null"  -> (delete Animal <gen:0> (where (is not null (PATH mother))))
+"delete Animal where not mother is not null"  -> (delete Animal <gen:0> (where (not (is not null (PATH mother)))))
+"delete Animal"  -> (delete Animal <gen:0>)
+"delete from Thing"  -> (delete Thing <gen:0>)
+"delete from Person"  -> (delete Person <gen:0>)
+"delete from Location"  -> (delete Location <gen:0>)
+"delete from Child"  -> (delete Child <gen:0>)
+"delete from Parent"  -> (delete Parent <gen:0>)
+"delete from Item"  -> (delete Item <gen:0>)
+"delete Customer where contactOwner is not null"  -> (delete Customer <gen:0> (where (is not null (PATH contactOwner))))
+"delete Employee where manager is not null"  -> (delete Employee <gen:0> (where (is not null (PATH manager))))
+"delete Employee where manager is null"  -> (delete Employee <gen:0> (where (is null (PATH manager))))
+"delete Employee where manager is not empty"  -> (delete Employee <gen:0> (where (IS_NOT_EMPTY (PATH manager))))
+"delete Employee where manager is empty"  -> (delete Employee <gen:0> (where (IS_EMPTY (PATH manager))))
+"delete Person"  -> (delete Person <gen:0>)
+"delete Locality"  -> (delete Locality <gen:0>)
+"delete Country"  -> (delete Country <gen:0>)
+"delete Continent"  -> (delete Continent <gen:0>)
+"delete from DataPoint"  -> (delete DataPoint <gen:0>)
+"delete from User where userid = :userid"  -> (delete User <gen:0> (where (= (PATH userid) userid)))
+"delete from Mail where alias = :alias"  -> (delete Mail <gen:0> (where (= (PATH alias) alias)))
 "delete from NumberedNode where name like 'child%'"  -> (delete NumberedNode (where (LOGICAL_EXPR (like (GENERIC_ELEMENT name) 'child%'))))
 "delete from fooArray where id_='???' and i>=8"  -> (delete fooArray (where (LOGICAL_EXPR (and (= (GENERIC_ELEMENT id_) '???') (>= (GENERIC_ELEMENT i) 8)))))
 "delete from t_user"  -> (delete t_user)
@@ -1580,7 +1580,7 @@ DELETE STATEMENT
 "delete Animal where bodyWeight not between 10 and 20" -> (delete Animal (where (LOGICAL_EXPR (not between (GENERIC_ELEMENT bodyWeight) (BETWEEN_LIST (EXPR 10) (EXPR 20))))))
 "delete Animal where description like 'grand%'"  -> (delete Animal (where (LOGICAL_EXPR (like (GENERIC_ELEMENT description) 'grand%'))))
 "delete Animal where description not like 'grand%'"  ->  (delete Animal (where (LOGICAL_EXPR (not like (GENERIC_ELEMENT description) 'grand%'))))
-"delete from Animal where mother is not null or father is not null"  -> (delete Animal (where (LOGICAL_EXPR (or (is not null (GENERIC_ELEMENT mother)) (is not null (GENERIC_ELEMENT father))))))
+"delete from Animal where mother is not null or father is not null"  -> (delete Animal <gen:0> (where (LOGICAL_EXPR (or (is not null (GENERIC_ELEMENT mother)) (is not null (GENERIC_ELEMENT father))))))
 "delete Animal where mother = :mother"  -> (delete Animal (where (LOGICAL_EXPR (= (GENERIC_ELEMENT mother) mother))))
 "delete EntityWithCrazyCompositeKey where id.id = 1 and id.otherId = 2"  ->  (delete EntityWithCrazyCompositeKey (where (LOGICAL_EXPR (and (= (GENERIC_ELEMENT (. id id)) 1) (= (GENERIC_ELEMENT (. id otherId)) 2)))))
 "delete from EntityWithCrazyCompositeKey where id.id = 1 and id.otherId = 2"  -> (delete EntityWithCrazyCompositeKey (where (LOGICAL_EXPR (and (= (GENERIC_ELEMENT (. id id)) 1) (= (GENERIC_ELEMENT (. id otherId)) 2)))))
