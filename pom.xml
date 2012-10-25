@@ -40,8 +40,9 @@
         <module>hibernate-jpql-parser</module>
         <!--
            We'll split in modules in a second time
-           <module>hibernate-jpql2lucene</module>
+           <module>hibernate-jpql-to-lucene</module>
          -->
+        <module>hibernate-jpql-to-mongodb</module>
     </modules>
 
     <issueManagement>
@@ -125,6 +126,7 @@
         <hibernateCommonsAnnotationVersion>4.0.1.Final</hibernateCommonsAnnotationVersion>
         <jbossLoggingVersion>3.1.1.GA</jbossLoggingVersion>
         <jbossLoggingProcessorVersion>1.0.3.Final</jbossLoggingProcessorVersion>
+        <mongodbVersion>2.8.0</mongodbVersion>
     </properties>
 
     <dependencyManagement>
@@ -133,6 +135,11 @@
                 <groupId>org.apache.lucene</groupId>
                 <artifactId>lucene-core</artifactId>
                 <version>${luceneVersion}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mongodb</groupId>
+                <artifactId>mongo-java-driver</artifactId>
+                <version>${mongodbVersion}</version>
             </dependency>
             <dependency>
                 <groupId>junit</groupId>
