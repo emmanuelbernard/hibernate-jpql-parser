@@ -28,10 +28,17 @@ public class MongoDBTreeWalkTest {
 	private static boolean USE_STDOUT = true;
 
 	@Test
-	public void walkTest1() {
+	public void findAllInstancesOfAType() {
 		transformationAssert(
 				"from SomeEntity" ,
 				"{ }" );
+	}
+
+	@Test
+	public void equality() {
+		transformationAssert(
+				"from SomeEntity e where e.name = 'same'" ,
+				"{ \"name\" : \"same\"}" );
 	}
 
 	private void transformationAssert(String jpaql, String expectedLuceneQuery) {

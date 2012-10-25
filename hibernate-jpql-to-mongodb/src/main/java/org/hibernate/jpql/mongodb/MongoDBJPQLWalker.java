@@ -2,13 +2,17 @@ package org.hibernate.jpql.mongodb;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
-import org.antlr.runtime.RecognizerSharedState;
 import org.antlr.runtime.tree.Tree;
 import org.antlr.runtime.tree.TreeNodeStream;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.TermQuery;
 import org.hibernate.sql.ast.common.JoinType;
 import org.hibernate.sql.ast.origin.hql.resolve.EntityNamesResolver;
 import org.hibernate.sql.ast.origin.hql.resolve.GeneratedHQLResolver;
+import org.hibernate.sql.ast.origin.hql.resolve.path.PathedPropertyReference;
+import org.hibernate.sql.ast.origin.hql.resolve.path.PathedPropertyReferenceSource;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,10 +39,22 @@ public class MongoDBJPQLWalker extends GeneratedHQLResolver {
 	 * Set to true when we are walking in the tree area defining a SELECT type/options
 	 */
 	private boolean definingSelectStrategy;
+	
+	private final Map<String, Object> namedParameters;
+	
+	private String propertyName;
 
-	public MongoDBJPQLWalker(TreeNodeStream input, EntityNamesResolver entityNames) {
+	public MongoDBJPQLWalker(TreeNodeStream input,
+							 EntityNamesResolver entityNames) {
+		this( input, entityNames, Collections.EMPTY_MAP );
+	}
+
+	public MongoDBJPQLWalker(TreeNodeStream input,
+							 EntityNamesResolver entityNames, 
+							 Map<String,Object> namedParameters) {
 		super( input );
 		this.entityNames = entityNames;
+		this.namedParameters = namedParameters;
 	}
 
 	public DBObject getMongoDBQuery() {
@@ -49,6 +65,46 @@ public class MongoDBJPQLWalker extends GeneratedHQLResolver {
 		return targetEntity;
 	}
 
+	protected Tree normalizePropertyPathTerminus(PathedPropertyReferenceSource source, Tree propertyNameNode) {
+		// receives the property name on a specific entity reference _source_
+		this.propertyName = propertyNameNode.toString();
+		return null;
+	}
+	
+	/**
+	 * This implements the equality predicate; the comparison
+	 * predicate could be a constant, a subfunction or
+	 * some random type parameter.
+	 * The tree node has all details but with current tree rendering
+	 * it just passes it's text so we have to figure out the options again.
+	 */
+	protected void predicateEquals(final String comparativePredicate) {
+		final Object comparison = fromNamedQuery( comparativePredicate );
+		String comparisonTerm = valueToString( comparison );
+		//FIXME do something with the boolean and / or
+		query.append( propertyName, comparisonTerm );
+	}
+
+
+	
+	//TODO is it a helper method?	
+	private Object fromNamedQuery(String comparativePredicate) {
+		if ( comparativePredicate.startsWith( ":" ) ) {
+			return namedParameters.get( comparativePredicate.substring( 1 ) );
+		}
+		else {
+			return comparativePredicate;
+		}
+	}
+
+	//TODO should be shared?
+	// might need to be valueToMongoDBValue
+	private String valueToString(Object comparison) {
+		return comparison.toString();
+	}
+	
+	
+	
 	//code that might be shared by several walkers
 
 
@@ -96,5 +152,9 @@ public class MongoDBJPQLWalker extends GeneratedHQLResolver {
 
 	protected void popStrategy() {
 		definingSelectStrategy = false;
+	}
+
+	protected PathedPropertyReferenceSource normalizeQualifiedRoot(Tree identifier381) {
+		return new PathedPropertyReference( identifier381.getText(), aliasToEntityType );
 	}
 }
